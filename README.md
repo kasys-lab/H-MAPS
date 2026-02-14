@@ -31,5 +31,5 @@ python demo_main_reproduct.py --demo data/nlp_search_log.jsonl
 
 **Scenario 2: HCI Researcher**
 ```bash
-python demo_main_reproduct.py --demo data/nlp_search_log.jsonl
+python demo_main_reproduct.py --demo data/hci_search_log.jsonl
 ```
