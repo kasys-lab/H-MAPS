@@ -309,7 +309,7 @@ class Overlay(QWidget):
         self.expanded_height = 0 
         self._move_to_top_right()
 
-        # ★ 初期化時にガイドを表示
+        # ガイドを表示
         self.show_guide()
 
     def show_guide(self):
@@ -557,7 +557,6 @@ class Overlay(QWidget):
     def update_results(self, payload: List[dict]):
         print(f"[DEBUG] UI update: received {len(payload)} blocks", flush=True)
         
-        # ★ ガイドを含め、既存のウィジェットを完全にクリアする
         while self.scroll_layout.count():
             item = self.scroll_layout.takeAt(0)
             w = item.widget()
@@ -614,4 +613,5 @@ if __name__ == "__main__":
     app = QApplication([])
     w = Overlay()
     w.show()
+
     app.exec()
