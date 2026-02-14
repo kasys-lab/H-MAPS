@@ -17,7 +17,7 @@ H-MAPS is a proactive literature exploration assistant that resolves context amb
 ## 🚀 Getting Started
 
 ### Prerequisites
-- Python 3.8+
+- Python 3.12+
 - Required packages: `PySide6`, `mss`, `pyocr`, `numpy`, `openai`, `pynput`
 - (Optional for full local mode) `llama-cpp-python`, `torch`, `transformers`, `faiss-cpu`
 
