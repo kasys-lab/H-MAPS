@@ -308,7 +308,6 @@ class PipelineWorker(QObject):
         dur_total = t_total_end - t_start_total
         dur_overhead = dur_total - (dur_prep + dur_gen + dur_ret) # UI emitまでのラグなど
 
-        # ★ 論文用フォーマットで出力
         print("-" * 60, flush=True)
         print(f"[PAPER-METRICS] End-to-End Latency: {dur_total:.4f} sec", flush=True)
         print(f"  1. Question Generation (LLM): {dur_gen:.4f} sec", flush=True)
@@ -410,8 +409,6 @@ def main():
     args = parser.parse_args()
     app = QApplication(sys.argv)
     
-    # ★ Removed: resize_active_window_to_left
-    
     signal.signal(signal.SIGINT, lambda s, f: app.quit())
     print("[INFO] Initializing GUI...", flush=True)
     overlay = demo_gui.Overlay()
@@ -425,4 +422,5 @@ def main():
     sys.exit(app.exec())
 
 if __name__ == "__main__":
+
     main()
