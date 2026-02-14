@@ -516,7 +516,7 @@ TEXT:
     return text[:200].replace("\n", " ") + "..."
 
 def llm_integrate_session(local_contexts: List[str]) -> str:
-    """Step 3: Local Contexts -> Session Context (★UPDATED: using Local LLM★)"""
+    """Step 3: Local Contexts -> Session Context"""
     joined = "\n".join([f"- {s}" for s in local_contexts])
     
     # ローカルLLMがあるならローカルで処理（プライバシー優先）
@@ -586,7 +586,7 @@ def generate_query_with_hmaps(
     session_context: str,
     inferred_profile: str,
     trigger_type: str = "expansion",
-    provider: str = "openai"  # ★ 引数を追加
+    provider: str = "openai"
 ) -> tuple[List[str], str]:
     """
     Step 5: Query Generation
@@ -718,5 +718,6 @@ OUTPUT (3 queries):
         fallback = current_text.split('\n')[0][:50]
         if "?" not in fallback: fallback += "?"
         questions = [fallback]
+
 
     return questions, used_prompt
