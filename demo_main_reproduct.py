@@ -14,7 +14,7 @@ import signal
 import hashlib
 import time
 import threading
-import json  # ★JSONL読み込み用に追加
+import json
 from collections import deque
 from typing import Set, Optional, Tuple, List
 import numpy as np
@@ -35,7 +35,6 @@ ADAPTIVE_WINDOW_SIZE = 10
 MIN_SIMILARITY_BOUND = 0.2    
 Z_SCORE_THRESHOLD = 3.0       
 
-# デモ撮影時はここを短くすると楽です（例: 3.0）
 MIN_DWELL_SEC = 10.0         
 MAX_DWELL_SEC = 60.0         
 DEFAULT_READING_SPEED_CPS = 20.0  
@@ -116,14 +115,12 @@ class PipelineWorker(QObject):
         self.current_estimated_speed = DEFAULT_READING_SPEED_CPS
         self.current_required_dwell = MIN_DWELL_SEC
 
-        # --- ★DEMO DATA LOADING ---
+        # --- DEMO DATA LOADING ---
         self.demo_payload = None
         if self.args.demo:
             try:
                 print(f"[DEMO] Loading mock data from: {self.args.demo}", flush=True)
                 with open(self.args.demo, "r", encoding="utf-8") as f:
-                    # JSONLの最後の行（最新のログ）または最初の行を使用
-                    # ここではファイルを全部読んで、最後の有効なエントリを採用します
                     lines = f.readlines()
                     last_line = lines[-1] if lines else "{}"
                     data = json.loads(last_line)
@@ -233,11 +230,11 @@ class PipelineWorker(QObject):
                     is_regression = any(calculate_jaccard_similarity(pt, ocr_text) >= REGRESSION_SIMILARITY_THRESHOLD for pt, _ in self.scene_history)
                     
                     if is_regression and dwell_duration >= TRIGGER_B_REGRESSION_DWELL_SEC:
-                        print(f"[TRIGGER] Type B (Support) fired!", flush=True)
+                        print(f"[TRIGGER] Type B (Content Revisit) fired!", flush=True)
                         self._fire_query(ocr_text, mode="support")
                         self.trigger_fired_for_current_scene = True
                     elif dwell_duration >= self.current_required_dwell:
-                        print(f"[TRIGGER] Type A (Expansion) fired!", flush=True)
+                        print(f"[TRIGGER] Type A (Sustained Attention) fired!", flush=True)
                         self._fire_query(ocr_text, mode="expansion")
                         self.trigger_fired_for_current_scene = True
                 
@@ -403,7 +400,7 @@ class MainController(QObject):
         if args.persona:
             self.memory_manager.inject_demo_profile(args.persona)
 
-        # --- ★SKIP HEAVY LOADING IN DEMO MODE ---
+        # --- SKIP HEAVY LOADING IN DEMO MODE ---
         if args.demo:
             print("[INFO] DEMO MODE DETECTED. Skipping Index/LLM loading for instant startup.", flush=True)
             self.retriever = None
@@ -474,11 +471,11 @@ def build_argparser():
     ap.add_argument("--ocr_lang", type=str, default="eng")
     ap.add_argument("--num_questions", type=int, default=3)
     ap.add_argument("--local_model", type=str, default="models/Phi-3.5-mini-instruct-Q4_K_M.gguf")
-    ap.add_argument("--persona", type=str, choices=["algo", "hci"], default=None)
+    ap.add_argument("--persona", type=str, choices=["nlp", "hci"], default=None)
     ap.add_argument("--gen_provider", type=str, choices=["openai", "local"], default="openai",
                     help="Choose 'openai' for GPT-4o or 'local' for local LLM question generation.")
     
-    # ★ Added argument for Demo Playback
+    # Added argument for Demo Playback
     ap.add_argument("--demo", type=str, default=None, help="Path to a JSONL log file to replay search results from.")
     return ap
 
@@ -487,8 +484,6 @@ def main():
     parser = build_argparser()
     args = parser.parse_args()
     app = QApplication(sys.argv)
-    
-    # ★ Removed: resize_active_window_to_left
     
     signal.signal(signal.SIGINT, lambda s, f: app.quit())
     print("[INFO] Initializing GUI...", flush=True)

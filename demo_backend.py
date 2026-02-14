@@ -48,7 +48,7 @@ from openai import AzureOpenAI
 CANDIDATE_ENV_FILES = ["secrets/secrets.txt"]
 
 DEMO_PERSONAS = {
-    "algo": """
+    "nlp": """
 User is a Computer Science researcher specializing in NLP algorithms and RAG architectures. Primary interests include inference latency optimization, model compression , and the computational complexity of reflection token generation. User prioritizes backend performance and system-level efficiency over user interface design.
 """,
     "hci": """
@@ -104,7 +104,6 @@ _local_llm = None
 def init_local_llm(model_path: str, n_gpu_layers: int = -1, n_ctx: int = 4096):
     """
     アプリケーション起動時に一度だけ呼ばれる初期化関数
-    Privacy Protectionのため、OCR生データの要約および記憶の更新はこれを使う
     """
     global _local_llm
     if not HAS_LOCAL_LLM:
@@ -383,7 +382,7 @@ class MemoryManager:
 
     def inject_demo_profile(self, persona_key: str):
         '''
-        persona_key: 'algo' or 'hci'
+        persona_key: 'nlp' or 'hci'
         '''
         # demo
         if persona_key not in DEMO_PERSONAS:
@@ -516,7 +515,7 @@ TEXT:
     return text[:200].replace("\n", " ") + "..."
 
 def llm_integrate_session(local_contexts: List[str]) -> str:
-    """Step 3: Local Contexts -> Session Context"""
+    """Step 3: Local Contexts -> Session Context """
     joined = "\n".join([f"- {s}" for s in local_contexts])
     
     # ローカルLLMがあるならローカルで処理（プライバシー優先）
@@ -586,7 +585,7 @@ def generate_query_with_hmaps(
     session_context: str,
     inferred_profile: str,
     trigger_type: str = "expansion",
-    provider: str = "openai"
+    provider: str = "openai" 
 ) -> tuple[List[str], str]:
     """
     Step 5: Query Generation
@@ -718,6 +717,5 @@ OUTPUT (3 queries):
         fallback = current_text.split('\n')[0][:50]
         if "?" not in fallback: fallback += "?"
         questions = [fallback]
-
 
     return questions, used_prompt

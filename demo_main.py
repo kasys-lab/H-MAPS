@@ -211,11 +211,11 @@ class PipelineWorker(QObject):
                     is_regression = any(calculate_jaccard_similarity(pt, ocr_text) >= REGRESSION_SIMILARITY_THRESHOLD for pt, _ in self.scene_history)
                     
                     if is_regression and dwell_duration >= TRIGGER_B_REGRESSION_DWELL_SEC:
-                        print(f"[TRIGGER] Type B (Support) fired!", flush=True)
+                        print(f"[TRIGGER] Type B (Content Revisit) fired!", flush=True)
                         self._fire_query(ocr_text, mode="support")
                         self.trigger_fired_for_current_scene = True
                     elif dwell_duration >= self.current_required_dwell:
-                        print(f"[TRIGGER] Type A (Expansion) fired!", flush=True)
+                        print(f"[TRIGGER] Type A (Sustained Attention) fired!", flush=True)
                         self._fire_query(ocr_text, mode="expansion")
                         self.trigger_fired_for_current_scene = True
                 
@@ -308,6 +308,7 @@ class PipelineWorker(QObject):
         dur_total = t_total_end - t_start_total
         dur_overhead = dur_total - (dur_prep + dur_gen + dur_ret) # UI emitまでのラグなど
 
+        # 論文用フォーマットで出力
         print("-" * 60, flush=True)
         print(f"[PAPER-METRICS] End-to-End Latency: {dur_total:.4f} sec", flush=True)
         print(f"  1. Question Generation (LLM): {dur_gen:.4f} sec", flush=True)
@@ -398,7 +399,7 @@ def build_argparser():
     ap.add_argument("--ocr_lang", type=str, default="eng")
     ap.add_argument("--num_questions", type=int, default=3)
     ap.add_argument("--local_model", type=str, default="models/Phi-3.5-mini-instruct-Q4_K_M.gguf")
-    ap.add_argument("--persona", type=str, choices=["algo", "hci"], default=None)
+    ap.add_argument("--persona", type=str, choices=["nlp", "hci"], default=None)
     ap.add_argument("--gen_provider", type=str, choices=["openai", "local"], default="openai",
                     help="Choose 'openai' for GPT-4o or 'local' for local LLM question generation.")
     return ap
@@ -422,5 +423,4 @@ def main():
     sys.exit(app.exec())
 
 if __name__ == "__main__":
-
     main()
