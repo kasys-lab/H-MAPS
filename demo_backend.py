@@ -20,13 +20,26 @@ import mss
 from PIL import Image
 from pathlib import Path
 from typing import List, Optional
-import torch
-from transformers import AutoTokenizer, AutoModel
-import faiss
 import time
 from datetime import datetime
 import json
 import sys
+
+# --- Optional Imports for Full Local Retrieval ---
+# torch, transformers, faiss がなくてもデモモード(--demo)は動くようにする
+try:
+    import torch
+    from transformers import AutoTokenizer, AutoModel
+    import faiss
+    HAS_RETRIEVAL_LIBS = True
+except ImportError:
+    HAS_RETRIEVAL_LIBS = False
+    print("[INFO] Retrieval libraries (torch/transformers/faiss) not found. Real-time search disabled (Demo mode OK).")
+    # 型ヒントなどでエラーにならないためのダミー定義
+    torch = None
+    faiss = None
+    class AutoTokenizer: pass
+    class AutoModel: pass
 
 # --- Local LLM Import ---
 try:
@@ -102,9 +115,6 @@ else:
 _local_llm = None
 
 def init_local_llm(model_path: str, n_gpu_layers: int = -1, n_ctx: int = 4096):
-    """
-    アプリケーション起動時に一度だけ呼ばれる初期化関数
-    """
     global _local_llm
     if not HAS_LOCAL_LLM:
         print("[ERR] Cannot init local LLM: library not installed.")
@@ -116,7 +126,6 @@ def init_local_llm(model_path: str, n_gpu_layers: int = -1, n_ctx: int = 4096):
 
     print(f"[INFO] Loading Local LLM from {model_path} ...", flush=True)
     try:
-        # n_gpu_layers=-1 でGPUフルオフロード
         _local_llm = Llama(
             model_path=model_path,
             n_gpu_layers=n_gpu_layers, 
@@ -132,9 +141,8 @@ def init_local_llm(model_path: str, n_gpu_layers: int = -1, n_ctx: int = 4096):
 # ================= LLM Helper (Local) =================
 
 def _run_local_llm(prompt: str, max_tokens: int = 300) -> str:
-    """ローカルLLM実行用ヘルパー"""
     if not _local_llm:
-        print("[WARN] Local LLM is not initialized.")
+        # print("[WARN] Local LLM is not initialized.") # うるさいのでコメントアウト
         return ""
     
     try:
@@ -153,7 +161,11 @@ def _run_local_llm(prompt: str, max_tokens: int = 300) -> str:
 
 # ================= S2ORC 検索 =================
 
-def mean_pool(last_hidden_state: torch.Tensor, attention_mask: torch.Tensor) -> torch.Tensor:
+def mean_pool(last_hidden_state, attention_mask):
+    # torchがインポートされていない場合のガード
+    if not HAS_RETRIEVAL_LIBS or torch is None:
+        return None
+        
     if last_hidden_state.size(1) != attention_mask.size(1):
         L = min(last_hidden_state.size(1), attention_mask.size(1))
         last_hidden_state = last_hidden_state[:, :L, :]
@@ -175,13 +187,16 @@ class S2ORCRetriever:
         top_k: int = 5,
     ):
         print("[INFO] S2ORCRetriever.__init__ start", flush=True)
+        if not HAS_RETRIEVAL_LIBS:
+            raise RuntimeError("Required libraries (torch, transformers, faiss) are not installed.")
+
         self.model_dir = model_dir
         self.index_root = Path(index_path)
         self.ids_root = Path(ids_path)
         self.db_path = db_path
         self.max_length = max_length
         self.top_k = top_k
-        self.device = torch.device("cpu") # 強制CPU (GPUがある場合は "cuda" に変更可)
+        self.device = torch.device("cpu")
 
         print(f"[INFO] loading model from {self.model_dir}", flush=True)
         self.model = AutoModel.from_pretrained(self.model_dir)
